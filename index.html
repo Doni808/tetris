@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        canvas {
+            display: block;
+            margin: auto;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game" width="300" height="600"></canvas>
+    <script>
+        window.onload = function() {
+            const canvas = document.getElementById('game');
+            const ctx = canvas.getContext('2d');
+            const rows = 20;
+            const cols = 10;
+            const blockSize = 30;
+            let board = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+            function drawBoard() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        if (board[row][col]) {
+                            ctx.fillStyle = 'blue';
+                            ctx.fillRect(col * blockSize, row * blockSize, blockSize, blockSize);
+                            ctx.strokeRect(col * blockSize, row * blockSize, blockSize, blockSize);
+                        }
+                    }
+                }
+            }
+
+            function startGame() {
+                // Logic for starting game and updating board.
+            }
+
+            setInterval(drawBoard, 100);
+        };
+    </script>
+</body>
+</html>
