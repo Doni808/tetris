@@ -104,6 +104,20 @@ if __name__ == '__main__':
             const blockSize = 30;
             let board = Array.from({ length: rows }, () => Array(cols).fill(0));
 
+            let currentPiece;
+            let currentX = 0;
+            let currentY = 0;
+
+            const pieces = [
+                [[1, 1, 1, 1]], // I
+                [[2, 2], [2, 2]], // O
+                [[0, 3, 0], [3, 3, 3]], // T
+                [[4, 0, 0], [4, 4, 4]], // L
+                [[0, 0, 5], [5, 5, 5]], // J
+                [[0, 6, 6], [6, 6, 0]], // S
+                [[7, 7, 0], [0, 7, 7]]  // Z
+            ];
+
             function drawBoard() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 for (let row = 0; row < rows; row++) {
@@ -117,11 +131,108 @@ if __name__ == '__main__':
                 }
             }
 
-            function startGame() {
-                // Logic for starting game and updating board.
+            function drawPiece() {
+                currentPiece.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            ctx.fillStyle = 'red';
+                            ctx.fillRect((currentX + x) * blockSize, (currentY + y) * blockSize, blockSize, blockSize);
+                            ctx.strokeRect((currentX + x) * blockSize, (currentY + y) * blockSize, blockSize, blockSize);
+                        }
+                    });
+                });
             }
 
-            setInterval(drawBoard, 100);
+            function spawnPiece() {
+                const index = Math.floor(Math.random() * pieces.length);
+                currentPiece = pieces[index];
+                currentX = Math.floor((cols - currentPiece[0].length) / 2);
+                currentY = 0;
+            }
+
+            function movePiece(dx, dy) {
+                currentX += dx;
+                currentY += dy;
+            }
+
+            function dropPiece() {
+                movePiece(0, 1);
+                if (collision()) {
+                    mergePiece();
+                    spawnPiece();
+                }
+            }
+
+            function collision() {
+                return currentPiece.some((row, y) =>
+                    row.some((value, x) =>
+                        value && (board[currentY + y]?.[currentX + x] || currentY + y >= rows)
+                    )
+                );
+            }
+
+            function mergePiece() {
+                currentPiece.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value) {
+                            board[currentY + y][currentX + x] = value;
+                        }
+                    });
+                });
+            }
+
+            function handleSwipe(direction) {
+                if (direction === 'left') movePiece(-1, 0);
+                if (direction === 'right') movePiece(1, 0);
+                if (direction === 'down') dropPiece();
+            }
+
+            canvas.addEventListener('touchstart', handleTouchStart, false);
+            canvas.addEventListener('touchmove', handleTouchMove, false);
+
+            let xDown = null;
+            let yDown = null;
+
+            function handleTouchStart(evt) {
+                const firstTouch = evt.touches[0];
+                xDown = firstTouch.clientX;
+                yDown = firstTouch.clientY;
+            }
+
+            function handleTouchMove(evt) {
+                if (!xDown || !yDown) {
+                    return;
+                }
+
+                const xUp = evt.touches[0].clientX;
+                const yUp = evt.touches[0].clientY;
+
+                const xDiff = xDown - xUp;
+                const yDiff = yDown - yUp;
+
+                if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                    if (xDiff > 0) {
+                        handleSwipe('left');
+                    } else {
+                        handleSwipe('right');
+                    }
+                } else {
+                    if (yDiff > 0) {
+                        handleSwipe('down');
+                    }
+                }
+
+                xDown = null;
+                yDown = null;
+            }
+
+            setInterval(() => {
+                dropPiece();
+                drawBoard();
+                drawPiece();
+            }, 500);
+
+            spawnPiece();
         };
     </script>
 </body>
