@@ -10,38 +10,116 @@
             margin: auto;
             background-color: #000;
         }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
     <canvas id="game" width="300" height="600"></canvas>
     <script>
-        window.onload = function() {
-            const canvas = document.getElementById('game');
-            const ctx = canvas.getContext('2d');
-            const rows = 20;
-            const cols = 10;
-            const blockSize = 30;
-            let board = Array.from({ length: rows }, () => Array(cols).fill(0));
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const cols = 10;
+        const rows = 20;
+        const blockSize = 30;
 
-            function drawBoard() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let row = 0; row < rows; row++) {
-                    for (let col = 0; col < cols; col++) {
-                        if (board[row][col]) {
-                            ctx.fillStyle = 'blue';
-                            ctx.fillRect(col * blockSize, row * blockSize, blockSize, blockSize);
-                            ctx.strokeRect(col * blockSize, row * blockSize, blockSize, blockSize);
-                        }
-                    }
+        const colors = ['#000', '#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#fff'];
+
+        let board = Array.from({ length: rows }, () => Array(cols).fill(0));
+        let currentPiece;
+        let currentX = 0;
+        let currentY = 0;
+
+        const pieces = [
+            [[1, 1, 1, 1]], // I
+            [[2, 2], [2, 2]], // O
+            [[0, 3, 0], [3, 3, 3]], // T
+            [[4, 0, 0], [4, 4, 4]], // L
+            [[0, 0, 5], [5, 5, 5]], // J
+            [[0, 6, 6], [6, 6, 0]], // S
+            [[7, 7, 0], [0, 7, 7]]  // Z
+        ];
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    ctx.fillStyle = colors[board[row][col]];
+                    ctx.fillRect(col * blockSize, row * blockSize, blockSize, blockSize);
+                    ctx.strokeRect(col * blockSize, row * blockSize, blockSize, blockSize);
                 }
             }
+        }
 
-            function startGame() {
-                // Placeholder for game logic.
+        function drawPiece() {
+            currentPiece.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        ctx.fillStyle = colors[value];
+                        ctx.fillRect((currentX + x) * blockSize, (currentY + y) * blockSize, blockSize, blockSize);
+                        ctx.strokeRect((currentX + x) * blockSize, (currentY + y) * blockSize, blockSize, blockSize);
+                    }
+                });
+            });
+        }
+
+        function spawnPiece() {
+            const index = Math.floor(Math.random() * pieces.length);
+            currentPiece = pieces[index];
+            currentX = Math.floor((cols - currentPiece[0].length) / 2);
+            currentY = 0;
+        }
+
+        function movePiece(dx, dy) {
+            currentX += dx;
+            currentY += dy;
+        }
+
+        function dropPiece() {
+            movePiece(0, 1);
+            if (collision()) {
+                mergePiece();
+                spawnPiece();
             }
+        }
 
-            setInterval(drawBoard, 100);
-        };
+        function collision() {
+            return currentPiece.some((row, y) =>
+                row.some((value, x) =>
+                    value && (board[currentY + y]?.[currentX + x] || currentY + y >= rows)
+                )
+            );
+        }
+
+        function mergePiece() {
+            currentPiece.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        board[currentY + y][currentX + x] = value;
+                    }
+                });
+            });
+        }
+
+        function gameLoop() {
+            drawBoard();
+            drawPiece();
+        }
+
+        setInterval(() => {
+            dropPiece();
+            gameLoop();
+        }, 500);
+
+        spawnPiece();
     </script>
 </body>
 </html>
